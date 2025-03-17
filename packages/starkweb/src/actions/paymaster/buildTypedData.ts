@@ -1,7 +1,8 @@
+import type { Call } from '../../strk-types/lib.js'
 import type { Client } from '../../clients/createClient.js'
 import type { Transport } from '../../clients/transports/createTransport.js'
 import type { Chain } from '../../types/chain.js'
-import type { Call, TypedData } from '@starknet-io/types-js'
+import type { TypedData } from '@starknet-io/types-js'
 
 export type BuildTypedDataParameters = {
   userAddress: string

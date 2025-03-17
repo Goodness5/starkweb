@@ -18,9 +18,7 @@ export type PaymasterClientConfig<
   chain extends Chain,
   accountOrAddress extends Account | Address | undefined = undefined,
   rpcSchema extends RpcSchema | undefined = undefined,
-> = ClientConfig<transport, chain, accountOrAddress, rpcSchema> & {
-  type: 'paymasterClient'
-}
+> = ClientConfig<transport, chain, accountOrAddress, rpcSchema>
 
 export type PaymasterClient<
   transport extends Transport,
@@ -41,8 +39,14 @@ export function createPaymasterClient<
 ): Prettify<
   Client<transport, chain, ParseAccount<accountOrAddress>, rpcSchema, PaymasterActions>
 > {
-  return createClient({
+  const { key = 'paymaster', name = 'Paymaster Client' } = parameters
+  const client = createClient({
     ...parameters,
+    key,
+    name,
     type: 'paymasterClient',
-  }).extend(paymasterActions)
+  })
+  return client.extend(paymasterActions) as Prettify<
+    Client<transport, chain, ParseAccount<accountOrAddress>, rpcSchema, PaymasterActions>
+  >
 }

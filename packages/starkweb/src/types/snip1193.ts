@@ -1,4 +1,4 @@
-import type { Call, PADDED_FELT, PADDED_TXN_HASH, Signature, TypedData } from '@starknet-io/types-js'
+import type { PADDED_FELT, PADDED_TXN_HASH, Signature, TypedData } from '@starknet-io/types-js'
 import type {
   AddInvokeTransactionParameters,
   AddInvokeTransactionResult,
@@ -55,6 +55,7 @@ import type {
   TYPED_DATA,
 } from './components.js'
 import type { DeploymentData, GaslessCompatibility, GasTokenPrice, GaslessStatus, PaymasterReward, InvokeResponse } from './paymaster.js'
+import type { Call } from '../strk-types/lib.js'
 
 //////////////////////////////////////////////////
 // Provider
