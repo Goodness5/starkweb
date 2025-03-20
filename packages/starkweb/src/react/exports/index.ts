@@ -379,6 +379,8 @@ export {
 ////////////////////////////////////////////////////////////////////////////////
 
 export {
+  type UsePaymasterProps,
+  type UsePaymasterReturn,
   usePaymaster
 } from '../hooks/usePaymaster.js'
 
