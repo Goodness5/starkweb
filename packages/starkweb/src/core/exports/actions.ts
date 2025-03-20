@@ -411,3 +411,16 @@ export {
   type VerifyTypedDataParameters,
   type VerifyTypedDataReturnType,
 } from "../actions/verifyTypedData.js";
+
+
+export {
+  fetchAccountRewards
+} from "../actions/fetchAccountRewards.js";
+
+export {
+  checkAccountCompatibility
+} from "../actions/checkAccountCompatibility.js";
+
+export {
+  fetchPaymasterStatus,
+} from "../actions/getPaymasterStatus.js";  
