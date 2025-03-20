@@ -423,4 +423,14 @@ export {
 
 export {
   fetchPaymasterStatus,
-} from "../actions/getPaymasterStatus.js";  
+} from "../actions/getPaymasterStatus.js";
+
+export {
+  buildTypedData,
+} from '../../actions/paymaster/buildTypedData.js';  
+export {
+  getGasTokenPrices,
+} from '../../actions/paymaster/getGasTokenPrices.js';  
+export {
+  executeTransaction,
+} from '../../actions/paymaster/executeTransaction.js';  

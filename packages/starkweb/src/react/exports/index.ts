@@ -364,6 +364,8 @@ export {
   useWriteContract,
 } from '../hooks/useWriteContract.js'
 
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Hydrate
 ////////////////////////////////////////////////////////////////////////////////
@@ -383,6 +385,12 @@ export {
   type UsePaymasterReturn,
   usePaymaster
 } from '../hooks/usePaymaster.js'
+
+export {
+  type UseExecuteTransactionProps,
+  type UseExecuteTransactionReturn,
+  useExecuteTransaction,
+} from '../hooks/useExecuteTransaction.js'
 
 ////////////////////////////////////////////////////////////////////////////////
 // @wagmi/core

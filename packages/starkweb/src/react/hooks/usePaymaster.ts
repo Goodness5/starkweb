@@ -1,16 +1,32 @@
-"use client"
-import { useState, useEffect } from 'react';
-import {fetchAccountRewards} from '../../core/exports/actions.js'
-import { checkAccountCompatibility } from '../../core/exports/actions.js'
-import { fetchPaymasterStatus } from '../../core/exports/actions.js'
-import type { GaslessStatus, GaslessCompatibility, PaymasterReward } from '../../types/paymaster.js';
-import type { ADDRESS } from '../../types/components.js';
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import {
+  fetchAccountRewards,
+  checkAccountCompatibility,
+  fetchPaymasterStatus,
+  getGasTokenPrices,
+  buildTypedData,
+  executeTransaction,
+} from "../../core/exports/actions.js";
+import type {
+  GaslessStatus,
+  GaslessCompatibility,
+  PaymasterReward,
+} from "../../types/paymaster.js";
+import type { ADDRESS } from "../../types/components.js";
+import { createPaymasterClient } from "../../clients/createPaymasterClient.js";
+import { http } from "../../clients/transports/http.js";
+import { mainnet } from "../../chains/definitions/mainnet.js";
+import { sepolia } from "../../chains/definitions/sepolia.js";
+import { type BuildTypedDataParameters } from "../../actions/paymaster/buildTypedData.js";
+import { type ExecuteTransactionParameters } from "../../actions/paymaster/executeTransaction.js";
 
 export type UsePaymasterProps = {
-  network: 'mainnet' | 'sepolia';
+  network: "mainnet" | "sepolia";
   accountAddress?: ADDRESS;
-  clientUrl?: string; 
+  clientUrl?: string;
 };
+
 
 export type UsePaymasterReturn = {
   status: GaslessStatus | null;
@@ -19,28 +35,15 @@ export type UsePaymasterReturn = {
   loading: boolean;
   error: string | null;
   refetch: {
-    fetchPaymasterStatus: () => Promise<GaslessStatus | null>;
-    checkAccountCompatibility: () => Promise<GaslessCompatibility | null>;
-    fetchAccountRewards: () => Promise<PaymasterReward[]>;
+    fetchPaymasterStatus: () => Promise<void>;
+    checkAccountCompatibility: () => Promise<void>;
+    fetchAccountRewards: () => Promise<void>;
+    getGasTokenPrices: () => Promise<void>;
+    buildTypedData: (params: BuildTypedDataParameters) => Promise<void>;
+    executeTransaction: (params: ExecuteTransactionParameters) => Promise<void>;
   };
 };
 
-/**
- * Custom hook to interact with the Paymaster service.
- *
- * @param {('mainnet' | 'sepolia')} network - The network to connect to, either 'mainnet' or 'sepolia'.
- * @param {ADDRESS} [accountAddress] - Optional account address to check compatibility and fetch rewards.
- * @returns {Object} An object containing the following properties and methods:
- * - `status` {GaslessStatus | null} - The current status of the Paymaster.
- * - `compatibility` {GaslessCompatibility | null} - The compatibility status of the provided account address.
- * - `rewards` {PaymasterReward[]} - The rewards associated with the provided account address.
- * - `loading` {boolean} - Indicates if a request is currently in progress.
- * - `error` {string | null} - Error message if any request fails.
- * - `refetch` {Object} - An object containing methods to manually refetch data:
- *   - `fetchPaymasterStatus` {Function} - Method to refetch the Paymaster status.
- *   - `checkAccountCompatibility` {Function} - Method to refetch the account compatibility status.
- *   - `fetchAccountRewards` {Function} - Method to refetch the account rewards.
- */
 export const usePaymaster = ({ network, accountAddress, clientUrl }: UsePaymasterProps): UsePaymasterReturn => {
   const [status, setStatus] = useState<GaslessStatus | null>(null);
   const [compatibility, setCompatibility] = useState<GaslessCompatibility | null>(null);
@@ -48,28 +51,53 @@ export const usePaymaster = ({ network, accountAddress, clientUrl }: UsePaymaste
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { status, loading: paymasterLoading, error: paymasterError } = await fetchPaymasterStatus(network, clientUrl);
+  const paymasterClient = createPaymasterClient({
+    chain: network === "mainnet" ? mainnet : sepolia,
+    transport: http(clientUrl || `http://localhost:3003/paymaster/${network}`),
+  });
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { status, error: statusError } = await fetchPaymasterStatus(network);
       setStatus(status);
-      setLoading(paymasterLoading);
-      setError(paymasterError);
+      setError(statusError);
+      
 
       if (accountAddress) {
-        const { compatibility, loading: compatibilityLoading, error: compatibilityError } = await checkAccountCompatibility(network, accountAddress, clientUrl);
+        const { compatibility, error: compatibilityError } = await checkAccountCompatibility(network, accountAddress);
         setCompatibility(compatibility);
-        setLoading(compatibilityLoading);
         setError(compatibilityError);
 
-        const { rewards, loading: rewardsLoading, error: rewardsError } = await fetchAccountRewards(network, accountAddress, clientUrl);
+        const { rewards, error: rewardsError } = await fetchAccountRewards(network, accountAddress);
         setRewards(rewards);
-        setLoading(rewardsLoading);
         setError(rewardsError);
+        
       }
-    };
-
-    fetchData();
+    } catch (err: any) {
+      setError(err.message || "An error occurred while fetching data");
+    } finally {
+      setLoading(false);
+    }
   }, [network, accountAddress]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleAsyncRequest = async (asyncFunc: () => Promise<any>, setState: (data: any) => void) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await asyncFunc();
+      setState(response);
+    } catch (err: any) {
+      setError(err.message || "An error occurred during request");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     status,
@@ -78,18 +106,12 @@ export const usePaymaster = ({ network, accountAddress, clientUrl }: UsePaymaste
     loading,
     error,
     refetch: {
-      fetchPaymasterStatus: async () => {
-        const { status } = await fetchPaymasterStatus(network);
-        return status;
-      },
-      checkAccountCompatibility: async () => {
-        const { compatibility } = await checkAccountCompatibility(network, accountAddress!);
-        return compatibility;
-      },
-      fetchAccountRewards: async () => {
-        const { rewards } = await fetchAccountRewards(network, accountAddress!);
-        return rewards;
-      },
+      fetchPaymasterStatus: () => handleAsyncRequest(() => fetchPaymasterStatus(network), setStatus),
+      checkAccountCompatibility: () => handleAsyncRequest(() => checkAccountCompatibility(network, accountAddress!), setCompatibility),
+      fetchAccountRewards: () => handleAsyncRequest(() => fetchAccountRewards(network, accountAddress!), setRewards),
+      getGasTokenPrices: () => handleAsyncRequest(() => getGasTokenPrices(paymasterClient, undefined), () => {}),
+      buildTypedData: (params) => handleAsyncRequest(() => buildTypedData(paymasterClient, params), () => {}),
+      executeTransaction: (params) => handleAsyncRequest(() => executeTransaction(paymasterClient, params), () => {}),
     },
   };
 };
