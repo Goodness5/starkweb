@@ -5,7 +5,7 @@ import { mainnet, sepolia } from '../../exports/chains.js';
 import type { PaymasterReward } from '../../types/paymaster.js';
 import type { ADDRESS } from '../../types/components.js';
 
-export const fetchAccountRewards = async (network: 'mainnet' | 'sepolia', accountAddress: ADDRESS) => {
+export const fetchAccountRewards = async (network: 'mainnet' | 'sepolia', accountAddress: ADDRESS, url: string = `http://localhost:3003/paymaster/${network}`) => {
   const [rewards, setRewards] = useState<PaymasterReward[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export const fetchAccountRewards = async (network: 'mainnet' | 'sepolia', accoun
   const chain = network === 'mainnet' ? mainnet : sepolia;
   const paymasterClient = createPaymasterClient({
     chain,
-    transport: http(`http://localhost:3003/paymaster/${network}`),
+    transport: http(url),
   });
 
   setLoading(true);

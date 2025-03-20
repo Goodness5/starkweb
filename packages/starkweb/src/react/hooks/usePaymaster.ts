@@ -9,6 +9,7 @@ import type { ADDRESS } from '../../types/components.js';
 export type UsePaymasterProps = {
   network: 'mainnet' | 'sepolia';
   accountAddress?: ADDRESS;
+  clientUrl?: string; 
 };
 
 export type UsePaymasterReturn = {
@@ -40,7 +41,7 @@ export type UsePaymasterReturn = {
  *   - `checkAccountCompatibility` {Function} - Method to refetch the account compatibility status.
  *   - `fetchAccountRewards` {Function} - Method to refetch the account rewards.
  */
-export const usePaymaster = ({ network, accountAddress }: UsePaymasterProps): UsePaymasterReturn => {
+export const usePaymaster = ({ network, accountAddress, clientUrl }: UsePaymasterProps): UsePaymasterReturn => {
   const [status, setStatus] = useState<GaslessStatus | null>(null);
   const [compatibility, setCompatibility] = useState<GaslessCompatibility | null>(null);
   const [rewards, setRewards] = useState<PaymasterReward[]>([]);
@@ -49,18 +50,18 @@ export const usePaymaster = ({ network, accountAddress }: UsePaymasterProps): Us
 
   useEffect(() => {
     const fetchData = async () => {
-      const { status, loading: paymasterLoading, error: paymasterError } = await fetchPaymasterStatus(network);
+      const { status, loading: paymasterLoading, error: paymasterError } = await fetchPaymasterStatus(network, clientUrl);
       setStatus(status);
       setLoading(paymasterLoading);
       setError(paymasterError);
 
       if (accountAddress) {
-        const { compatibility, loading: compatibilityLoading, error: compatibilityError } = await checkAccountCompatibility(network, accountAddress);
+        const { compatibility, loading: compatibilityLoading, error: compatibilityError } = await checkAccountCompatibility(network, accountAddress, clientUrl);
         setCompatibility(compatibility);
         setLoading(compatibilityLoading);
         setError(compatibilityError);
 
-        const { rewards, loading: rewardsLoading, error: rewardsError } = await fetchAccountRewards(network, accountAddress);
+        const { rewards, loading: rewardsLoading, error: rewardsError } = await fetchAccountRewards(network, accountAddress, clientUrl);
         setRewards(rewards);
         setLoading(rewardsLoading);
         setError(rewardsError);

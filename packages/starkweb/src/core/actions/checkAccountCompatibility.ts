@@ -5,7 +5,7 @@ import { mainnet, sepolia } from '../../exports/chains.js';
 import type { GaslessCompatibility } from '../../types/paymaster.js';
 import type { ADDRESS } from '../../types/components.js';
 
-export const checkAccountCompatibility = async (network: 'mainnet' | 'sepolia', accountAddress: ADDRESS) => {
+export const checkAccountCompatibility = async (network: 'mainnet' | 'sepolia', accountAddress: ADDRESS, url: string = `http://localhost:3003/paymaster/${network}`) => {
   const [compatibility, setCompatibility] = useState<GaslessCompatibility | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export const checkAccountCompatibility = async (network: 'mainnet' | 'sepolia', 
   const chain = network === 'mainnet' ? mainnet : sepolia;
   const paymasterClient = createPaymasterClient({
     chain,
-    transport: http(`http://localhost:3003/paymaster/${network}`),
+    transport: http(url),
   });
 
   setLoading(true);
